@@ -1,0 +1,61 @@
+The rule for files in this folder.
+
+1. Prefix is always the author's initials, for me, my name is Chen Qi so all functions are prefixed with cq.
+2. Files in private functions need to be simple and with another prefix of the function's name. For example, the fft function should be named "cqfft" in the current folder, however the private function such as normalization function should be named "fftnorm" and should be put in the ./private folder.
+3. All the functions used should be in this folder if not, list the outside functions in the function outside section at the bottom and move them in the folder with rules applied in 1 and 2 later on.
+4. All the scripts starts with cqs.
+5. All functions and scripts MUST BE recorded here.
+6. All related data must be stored to the folder with the function or script name.
+7. All function name should be in lower case
+8. All scripts should also use capitalized initial of each word
+
+Function Description ***********************************
+
+cqgaussianfit:
+# Fit two-way wavefield dictionary with Gaussian curves with 3 parameters a,b and c for equation w = a*exp(-((x-b)/c).^2)
+# General gaussian curve fitting with the same expression could also use this function
+
+cqpick:
+# picking function with several options
+
+cqpickslope:
+# designed to help slant-stack p parameter determination by interactively picking slopes
+
+cqslantstack:
+# tau-p transform for slant stacking
+
+cqinvslantstack
+# inverse tau-p transform
+
+cqnotify
+# used for on-screen print for loop progress
+
+
+Script Description *************************************
+
+cqsFreqAndDelay: 
+#From one well, 
+#-> do Monte Carlo Simulation 
+#-> wavefield extraction 
+#-> curve fitting with two parameter kernel wavelets 
+#-> par1 stands for broadness and par2 stands for time delay 
+#-> draw probability map (binomial) with all wells simulated 
+#-> give par1 in the future, the program will tell you how much chance #par2 will be for different lag times.
+
+cqsMorletFittingWD
+# Try to combine matching pursuit wavelet decomposition with my Monte-Carlo Simulation statistical result.
+
+cqsVelAnylasisAndTotalThickness
+# Try to use velocity analysis at very low frequency to extract interval velocity and use this interval velocity to invert for total thickness.
+
+cqsGLIAndDelayEstimation
+# GLI usually gives delayed time arrival of the impedanc profile due to ununiqueness of the inversion and short-lag-multiples.
+# Monte-Carlo simulation will generate a database for further searching the compensation method
+# Finally, a time-varying compression based on the previous databse is applied on the inversed impedance. 
+# The final impedance profile will be the "attenuated" true impedance profile with little time delay effects due to stratigraphic filtering or multiples
+
+cqsGLIFieldData
+# Tested low->high frequency GLI on Surat Basin and Cooper Basin
+# The report is made in ppt file named "Generalized Linear Inversion for Impedance Tested On Filed Data.pptx"
+
+Function Outside ***************************************
