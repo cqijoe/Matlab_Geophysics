@@ -1,4 +1,4 @@
-function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp  )
+function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp,pfil  )
 % [ taup ] = cqlinradon( crp,dt,x,p,beta  )
 % Slant stack using Linear Radon Transform. 
 % Reference: Yilmaz's Text Book P988 (Seismic Data Analysis)
@@ -19,6 +19,8 @@ function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp  )
 %               sweeping time
 % dp ... LMO for p in the input crp. So event with p1 is actually 
 %        having slope of p1 + dp.
+% pfil ... indexes indicating which p should be filtered and which
+%          should not
 %
 % If user don't want to do phase correction, then don't give
 % ship_speed argument
@@ -28,6 +30,10 @@ function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp  )
 % taup1 ... same with taup0. only assigned when v_boat is given. it is
 %           corresponded to the taup data after phase-correction
 %           filtering
+
+if nargin < 9
+    pfil = 1:length(p);
+end
 
 % check input
 if length(x)~=size(crp,2)
@@ -103,19 +109,17 @@ if exist('v_boat','var')
     tswp = vib_info(3); % sweeping time
     nf = find(f>=f0 & f<=f1); % sample number in the taup_w needs for correction
     phase = zeros(length(f),np); % phase correction
+    
     % for every ray paramter, calculate a column of phase
     for k = 1:length(p)
-        phase(nf,k) = -2*pi*dopfactor(k)*tswp*f(nf).^2./finterval;
-        % I add this for test purpose, this make all events linearly
-        % downward shift for 100 * dt second--------------------
-        % t0 = 100 * dt;
-        % phase(nf,k) = -2 * pi * f(nf) * t0;
-        % -------------------------------------------------------
+        % decide whether to filer this p
+        if ismember(k,pfil)
+            phase(nf,k) = -2*pi*dopfactor(k)*tswp*f(nf).^2./finterval;
+        end
     end
-    % filter out everything outside the frequency range
     
-    % For test purpose, I temporarily comment this line
-    %    taup_w([1:nf(1),nf(end):end],:) = 0;
+    % filter out everything outside the frequency range
+       taup_w([1:nf(1),nf(end):end],:) = 0;
     
     % update taup_w by phase correction filter
         taup_w = taup_w.*exp(1i*phase);
