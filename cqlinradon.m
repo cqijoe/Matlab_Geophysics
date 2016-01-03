@@ -1,4 +1,4 @@
-function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp,pfil  )
+function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp,pfil,zo  )
 % [ taup ] = cqlinradon( crp,dt,x,p,beta  )
 % Slant stack using Linear Radon Transform. 
 % Reference: Yilmaz's Text Book P988 (Seismic Data Analysis)
@@ -21,6 +21,7 @@ function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp,pfil  
 %        having slope of p1 + dp.
 % pfil ... indexes indicating which p should be filtered and which
 %          should not
+% zo ... zeroing-out tau-p data out-side of pfil (true or false)
 %
 % If user don't want to do phase correction, then don't give
 % ship_speed argument
@@ -33,6 +34,9 @@ function [ taup0,taup1 ] = cqlinradon( crp,dt,x,p,beta,v_boat,vib_info,dp,pfil  
 
 if nargin < 9
     pfil = 1:length(p);
+end
+if nargin < 10
+    zo = true;
 end
 
 % check input
@@ -115,6 +119,11 @@ if exist('v_boat','var')
         % decide whether to filer this p
         if ismember(k,pfil)
             phase(nf,k) = -2*pi*dopfactor(k)*tswp*f(nf).^2./finterval;
+        else
+            if zo
+            % test: set taup data 0 outside the selection of p
+            taup_w(:,k) = 0;
+            end
         end
     end
     
