@@ -1,4 +1,4 @@
-function [ d2, d1 ] = cqdoprm( d, dt, x, p, v, f0, f1, tswp, prng )
+function [ d2, d1, d0, d0_trcut ] = cqdoprm( d, dt, x, p, v, f0, f1, tswp, prng,trcut )
 % The function remove doppler effects in x-f domain.
 %
 % input
@@ -13,11 +13,14 @@ function [ d2, d1 ] = cqdoprm( d, dt, x, p, v, f0, f1, tswp, prng )
 % tswp = sweeping duration in seconds
 % prng = 1:length(p)
 %        indexes of p to filter
-%
+% trcut = <false>
+%         whether to truncate Tau - P Data by hand after forward Tau -
+%         P transform
 % output
 % ------
 % d2 = d after doppler effect removal
 % d1 = Optional output for tau - p data after filtering
+% d0 = Optional output for tau - p data before filtering
 
 % check input
 if length(x)~=size(d,2)
@@ -25,6 +28,9 @@ if length(x)~=size(d,2)
 end
 if ~exist('prng','var')||isempty(prng)
     prng = 1:length(p);
+end
+if ~exist('trcut','var')||isempty(trcut)
+    trcut = false;
 end
 
 % x-t to x-f transform
@@ -37,7 +43,8 @@ f = linspace(0,1/2/dt,N/2+1);
 f = f(:);
 
 % initialize output
-d1 = zeros(size(d,1), length(p)); % p-f data
+d0 = zeros(size(d,1), length(p));
+d1 = d0; % p-f data
 d2 = zeros(size(d)); % x-f data
 
 % shape x
@@ -51,8 +58,26 @@ for k = 1:length(p)
     % tp transform
     dtx = p(k) * x;
     pshift = exp(1i*2*pi*f*dtx);
-    trf = sum(d.*pshift,2);
+    trf = sum(d.*pshift,2); 
+    d0(:,k) = trf;
+end
+if trcut
+    % inverse transform p-f to p-tau domain
+    rld0 = real(d0); imd0 = imag(d0);
+    rld0 = [rld0;flipud(rld0(2:end-1,:))];
+    imd0 = [imd0;-flipud(imd0(2:end-1,:))];
+    d0 = rld0 + 1i*imd0;
+    d0 = real(ifft(d0,[],1));
     
+    % plot to let user truncate artifacts
+    d0 = cqtrcut(d0);
+    
+    % fft d0
+    d0 = fft(d0,[],1);
+    d0 = d0(1:N/2+1,:);
+end
+for k = 1:length(p)
+    trf = d0(:,k);
     if ismember(k, prng)
         % phase-correction filtering
         dpfct = -v * p(k);
@@ -60,7 +85,6 @@ for k = 1:length(p)
         phc(nf) = -2*pi*dpfct*tswp*f(nf).^2./f01;
         trf = trf.*exp(1i*phc);
     end
-    
     d1(:,k) = trf;
 end
 
@@ -86,6 +110,13 @@ if nargout > 1
     imd1 = [imd1;-flipud(imd1(2:end-1,:))];
     d1 = rld1 + 1i*imd1;
     d1 = real(ifft(d1,[],1));
+    if nargout > 2
+        rld0 = real(d0); imd0 = imag(d0);
+        rld0 = [rld0;flipud(rld0(2:end-1,:))];
+        imd0 = [imd0;-flipud(imd0(2:end-1,:))];
+        d0 = rld0 + 1i*imd0;
+        d0 = real(ifft(d0,[],1));
+    end
 end
 
 end
