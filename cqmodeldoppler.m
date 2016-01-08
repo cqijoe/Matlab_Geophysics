@@ -6,7 +6,7 @@ function [ s, sori, spilot,tr,t_pilot,t0 ] = ...
                     ifgeospread)
 % A simple program to model doppler effects
 % assume homogeneous lower half
-% space
+% space. This assume a diffractor.
 %
 % input:
 % ----------------Geometry part ---------------------------
@@ -114,9 +114,10 @@ spilot = cqchirp(t_pilot,f_start,t_sweep,f_end,phase,taper);
 nt0 = find(lag==0);
 s = s(nt0:nt0+length(sori)-1);
 
-
-% calculate t0
-t0 = interp1(ts,tr,0,'linear');
+if nargout > 5
+    % calculate t0
+    t0 = interp1(ts,tr,0,'linear');
+end
 
 end
 

@@ -1,4 +1,4 @@
-function [ d2, d1, d0, d0_trcut ] = cqdoprm( d, dt, x, p, v, f0, f1, tswp, prng,trcut )
+function [ d2, d1, d0 ] = cqdoprm( d, dt, x, p, v, f0, f1, tswp, prng,trcut )
 % The function remove doppler effects in x-f domain.
 %
 % input
