@@ -32,7 +32,7 @@ end
 if ~exist('trcut','var')||isempty(trcut)
     trcut = false;
 end
-
+ns = size(d,1);
 % x-t to x-f transform
 N = 2^nextpow2(size(d,1));
 d = fft(d,N,1);
@@ -61,6 +61,7 @@ for k = 1:length(p)
     trf = sum(d.*pshift,2); 
     d0(:,k) = trf;
 end
+d0 = d0/length(p);
 if trcut
     % inverse transform p-f to p-tau domain
     rld0 = real(d0); imd0 = imag(d0);
@@ -68,7 +69,7 @@ if trcut
     imd0 = [imd0;-flipud(imd0(2:end-1,:))];
     d0 = rld0 + 1i*imd0;
     d0 = real(ifft(d0,[],1));
-    
+
     % plot to let user truncate artifacts
     d0 = cqtrcut(d0);
     
@@ -102,6 +103,8 @@ rld2 = [rld2;flipud(rld2(2:end-1,:))];
 imd2 = [imd2;-flipud(imd2(2:end-1,:))];
 d2 = rld2 + 1i*imd2;
 d2 = real(ifft(d2,[],1));
+d2 = d2(1:ns,:);
+d2 = pi/2*d2/length(x);
 
 % optional output
 if nargout > 1
@@ -110,12 +113,14 @@ if nargout > 1
     imd1 = [imd1;-flipud(imd1(2:end-1,:))];
     d1 = rld1 + 1i*imd1;
     d1 = real(ifft(d1,[],1));
+    d1 = pi/2*d1/length(x);
     if nargout > 2
         rld0 = real(d0); imd0 = imag(d0);
         rld0 = [rld0;flipud(rld0(2:end-1,:))];
         imd0 = [imd0;-flipud(imd0(2:end-1,:))];
         d0 = rld0 + 1i*imd0;
         d0 = real(ifft(d0,[],1));
+        d0 = pi/2*d0/length(x);
     end
 end
 
