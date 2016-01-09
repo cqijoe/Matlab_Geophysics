@@ -136,7 +136,6 @@ for iter = 1:size(d,2)
         end
         % add the first face
         patch('faces',face(1:kf-1,:),'vertices',vertex(1:nv-1,:),'facecolor','k','edgecolor','none');
-        drawnow;
     end
 end
 
