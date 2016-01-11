@@ -1,4 +1,4 @@
-function cqwva( d,y,x,lvl,clip,line_color,face_color,mode )
+function cqwva( d,y,x,index_incre,lvl,clip,line_color,face_color,mode )
 % wiggle variable area plot of seismic data
 %
 % input
@@ -6,6 +6,9 @@ function cqwva( d,y,x,lvl,clip,line_color,face_color,mode )
 % d = matrix of data
 % y = vector y means axis tick in y, scalar y means sampling rate in y
 % x = same for y but for horizontal direction (x direction)
+% index_incre = 1 = index increment. 1 stands for no
+%                  skipping. This is useful when there are too many 
+%                  traces on screen.
 % lvl = 1 (default) = positive = level of gain & fill peaks
 %                   = negative = level of gain & fill troughs
 % clip = 3 (default) = clip level
@@ -15,10 +18,18 @@ function cqwva( d,y,x,lvl,clip,line_color,face_color,mode )
 %        'hold' = plot on the current axis
 %        'wipe' = clear current axis and draw a new one
 
+
 % input check
-if ~exist('x','var')||isempty(x)
-    x = 1:size(d,2);
+if ~exist('index_incre','var')||isempty(index_incre)
+    index_incre = 1;
 end
+d = d(:,1:index_incre:size(d,2));
+if ~exist('x','var')||isempty(x)
+    x = 1:index_incre:size(d,2);
+else
+    x = x(1:index_incre:length(x));
+end
+
 if ~exist('clip','var')||isempty(clip)
     clip = 3;
 end
