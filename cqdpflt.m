@@ -14,7 +14,7 @@ function [ gather ] = cqdpflt( xs0, xr0, us, ur, z, ...
 % *****
 % us = scalor for source speed (m/s)
 % ur = scalor for receiver speed. Both speeds are constants. (m/s)
-% z = scalor for reflector depth
+% z = vector for reflector depth 
 % v = scalor for medium (usually) water speed
 % f0 = starting sweeping frequency in Hz
 % f1 = ending sweeping frequency in Hz
@@ -46,56 +46,57 @@ tuncor = t(end); % in case tuncor is not an integer times dt
 t_pilot = 0:dt:tswp; t_pilot = t_pilot(:);
 tr_plt = cqchirp(t_pilot,f0,tswp,f1,0,taper);
 
-t_align = [];
+t_align = cell(length(z),1);
 
 if ns == nr
-    % create common-midpoint-gather
     dcor = zeros(nsamp,ns);
-    duncor = dcor;
-    for k = 1:ns
-        ts = search(xs0(k),xr0(k));
-        % create uncorrelated records
-        duncor(:,k) = cqchirp(ts,f0,tswp,f1,0,taper);
-        % create correlated records
-        [s,lag] = xcorr(duncor(:,k),tr_plt);
-        nt0 = find(lag==0);
-        dcor(:,k) = s(nt0:nt0+nsamp-1);
-        t_align(k) = interp1(ts, t, 0, 'linear', 'extrap');
-    end
-    dcor = dcor(1:floor(tcor/dt),:);
-    gather.type = 'cmg';
+    gather.type = 'common-midpoint-gather';
 elseif ns == 1
-    % create common-shot-gather
     dcor = zeros(nsamp,nr);
-    duncor = dcor;
-    for k = 1:nr
-        ts = search(xs0,xr0(k));
-        % create uncorrelated records
-        duncor(:,k) = cqchirp(ts,f0,tswp,f1,0,taper);
-        % create correlated records
-        [s,lag] = xcorr(duncor(:,k),tr_plt);
-        nt0 = find(lag==0);
-        dcor(:,k) = s(nt0:nt0+nsamp-1);
-        t_align(k) = interp1(ts, t, 0, 'linear', 'extrap');
-    end
-    dcor = dcor(1:floor(tcor/dt),:);
-    gather.type = 'csg';
+    gather.type = 'common-shot-gather';
 else
     dcor = zeros(nsamp,ns);
-    duncor = dcor;
-    for k = 1:ns
-        ts = search(xs0(k),xr0);
-        % create uncorrelated records
-        duncor(:,k) = cqchirp(ts,f0,tswp,f1,0,taper);
-        % create correlated records
-        [s,lag] = xcorr(duncor(:,k),tr_plt);
-        nt0 = find(lag==0);
-        dcor(:,k) = s(nt0:nt0+nsamp-1);
-        t_align(k) = interp1(ts, t, 0, 'linear', 'extrap');
-    end
-    dcor = dcor(1:floor(tcor/dt),:);
-    gather.type = 'crg';
+    gather.type = 'common-receiver-gather';
 end
+duncor = dcor;
+
+for nz = 1:length(z)
+if ns == nr
+    % create common-midpoint-gather
+    for k = 1:ns
+        ts = search(xs0(k),xr0(k),z(nz));
+        % create uncorrelated records
+        duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
+        t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
+    end
+    
+elseif ns == 1
+    % create common-shot-gather
+    for k = 1:nr
+        ts = search(xs0,xr0(k),z(nz));
+        % create uncorrelated records
+        duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
+        t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
+    end
+    
+else
+    for k = 1:ns
+        ts = search(xs0(k),xr0,z(nz));
+        % create uncorrelated records
+        duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
+        t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
+    end
+end
+end
+
+for ncorr = 1:size(duncor,2)
+    % create correlated records
+    [s,lag] = xcorr(duncor(:,ncorr),tr_plt);
+    nt0 = find(lag==0);
+    dcor(:,ncorr) = s(nt0:nt0+nsamp-1);
+end
+
+dcor = dcor(1:floor(tcor/dt),:);
 
 
 gather.data_correlate = dcor;
@@ -112,10 +113,12 @@ gather.taper = taper;
 gather.sweeping_time = tswp;
 gather.reflector_depth = z;
 gather.nmo_time = t_align;
+gather.tuncor = tuncor;
+gather.tcor = tcor;
 
 
 % =================
-    function ts = search(xs0, xr0)
+    function ts = search(xs0, xr0,z)
         % search for source time
         % xs0 and xr0 are only scalar
         D = xr0 + t*ur - xs0 - t*us; % D is broadcast by tuncor
