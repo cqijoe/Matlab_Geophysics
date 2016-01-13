@@ -16,8 +16,13 @@ function [ p, dp ] = cqfktp_dp( dx, fmax, n, prange )
 n = 2^nextpow2(n)*4;
 dk = 1/n/dx;
 dp = dk/fmax;
-
-
+p = min(prange):dp:max(prange);
+np = length(p);
+if mod(np,2)==0
+    np = np + 1;
+end
+p = linspace(min(prange),max(prange),np);
+dp = p(2) - p(1);
 
 
 end

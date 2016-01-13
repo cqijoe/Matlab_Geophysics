@@ -5,7 +5,9 @@ function [ coeffq ] = cqcomplex_interp( coeff, x, qval, term )
 % input
 % -----
 % coeff = Complex(or real) Numbers with length N
-% x = vector of x axis of coeff
+% x = vector of x axis of coeff, x must increasing and equally sampled
+%     if not, program will sort your x and test if it is equally
+%     sampled
 % qval = query values of coeff
 % term = 6 = how many terms you want to use to interpolate
 % 
@@ -22,6 +24,12 @@ end
 dx = x(2) - x(1);
 if length(x) ~= length(coeff)
     error('Invalid x axis! Must equal to coeff length!');
+end
+[x,I] = sort(x);
+coeff = coeff(I);
+
+if any( (diff(x) - dx) > 1e-5)
+    error('Invalid x axis! Must be equally sampled!');
 end
 
 % make sure the query x is within x limit
