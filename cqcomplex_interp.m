@@ -9,7 +9,8 @@ function [ coeffq ] = cqcomplex_interp( coeff, x, qval, term )
 %     if not, program will sort your x and test if it is equally
 %     sampled
 % qval = query values of coeff
-% term = 6 = how many terms you want to use to interpolate
+% term = 6 = how many terms you want to use to interpolate so each
+%            side will have 3 values to interpolate
 % 
 % output
 % ------
@@ -18,6 +19,10 @@ function [ coeffq ] = cqcomplex_interp( coeff, x, qval, term )
 
 if ~exist('term','var')||isempty(term)
     term = 6;
+else
+    if mod(term,2)~=0
+        error('term should be even!');
+    end
 end
 
 % check input
@@ -45,11 +50,23 @@ qval = qval(:);
 % find nearest term number of data to interpolate and do interpolation
 % point-by-point
 coeffq = zeros(length(qval),1);
+side_term = term/2;
 for k = 1:length(qval)
     % sort the difference and select the minimum term
     float_index_distance = (x - qval(k))/dx;
-    [~,I] = sort(abs(float_index_distance));
-    I = I(1:term);
+    [sort_result,I] = sort(float_index_distance);
+    % get larger value
+    I_r = I(sort_result>=0);
+    % get smaller value
+    I_l = I(sort_result<0);
+    
+    if length(I_r)>=side_term && length(I_l)>=side_term
+        I = [I_l(end-side_term+1:end),I_r(1:side_term)];
+    else
+        nmin = min([length(I_r),length(I_l)]);
+        I = [I_l(end-nmin+1:end),I_r(1:nmin)];
+    end
+    
     float_index_distance = float_index_distance(I);
     float_index_distance = float_index_distance(:);
     coeffq(k) = ...
