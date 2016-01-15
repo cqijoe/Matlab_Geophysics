@@ -1,4 +1,5 @@
-function [ tp, fk_bg ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange )
+function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,...
+    us, f0, f1, tswp )
 % Implement tau-p transform in f-k domain. Reference: Wade's Thesis in
 % UH, 1989
 %
@@ -14,11 +15,20 @@ function [ tp, fk_bg ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange )
 % frange = [0,1/2/dt] (default) frequency range,
 %          this gives you the ability of doing frequency filtering in
 %          fk domain.
+% --------------------------
+% if us is provided, then program will do phase-correction
+% filtering on generated tp data
+% --------------------------
+% us = boat traveling speed
+% f0 = starting sweeping frequency
+% f1 = ending sweeping frequency
+% tswp = total sweeping time from f0 to f1 (assuming linear sweep)
 %
 % output
 % ------
 % tp = tau - p data
 % fk_bg = fk data background, [0,2*pi)
+% tp_f = tau - p data after phase correction filtering
 
 if ~exist('frange','var')||isempty(frange)
     frange = [0,1/2/dt];
@@ -71,9 +81,30 @@ for m = 1:length(p)
     end
 end
 
+fp_no_filter = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
+    1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
+tp = real(ifft(fp_no_filter,[],1));
+
+% -----------------------------------------------------------------
+% if user provides us then we will do phase-correction filtering in
+% frequency domain then transform it back to time domain
+f = linspace(0,fnyq,nt/2+1);
+nf = find(f>=f0 & f<=f1);
+f01 = f1 - f0;
+if exist('us','var') && ~isempty(us)
+    for k = 1:length(p)
+        trf = fp(:,k);
+        % phase-correction filtering
+        dpfct = -us * p(k);
+        phc = zeros(size(trf));
+        phc(nf) = -2*pi*dpfct*tswp*f(nf).^2./f01;
+        trf = trf.*exp(1i*phc);
+        fp(:,k) = trf;
+    end
+end
 fp = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
     1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
-tp = real(ifft(fp,[],1));
+tp_f = real(ifft(fp,[],1));
 
 
 end

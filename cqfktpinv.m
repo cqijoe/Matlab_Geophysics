@@ -38,8 +38,8 @@ f_index = 1:(nt/2+1);
 % ---------------------
 fk = zeros(length(f),nx);
 knyq = 1/2/dx;
-k = linspace(0,2*knyq,nx+1);
-k(end) = [];
+k = linspace(0,knyq,nx/2+1);
+k = [k,-fliplr(k(2:end-1))];
 f_reserve = cell(nx,1); % each cell stores indexes to be filled by background
 
 % Fill the fk data trace-by-trace via k
