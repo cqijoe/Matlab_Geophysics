@@ -89,6 +89,7 @@ axis ij;
 xlim([min(x)-dx,max(x)+dx]);
 ylim([min(y),max(y)]);
 
+if ~strcmp(face_color,'none')
 % fill areas
 for iter = 1:size(d,2)
     nv = 1; % number of vertex
@@ -158,7 +159,7 @@ for iter = 1:size(d,2)
             'facecolor',face_color,'edgecolor','none','parent',ax);
     end
 end
-
+end
 
 
 
