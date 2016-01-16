@@ -1,5 +1,5 @@
 function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,...
-    us, f0, f1, tswp )
+    alias_filter,us, f0, f1, tswp )
 % Implement tau-p transform in f-k domain. Reference: Wade's Thesis in
 % UH, 1989
 %
@@ -15,6 +15,9 @@ function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,
 % frange = [0,1/2/dt] (default) frequency range,
 %          this gives you the ability of doing frequency filtering in
 %          fk domain.
+% alias_filter = true = program truncate aliased frequency
+%                       automaticaaly
+%              = false = not apply anti-alias process
 % --------------------------
 % if us is provided, then program will do phase-correction
 % filtering on generated tp data
