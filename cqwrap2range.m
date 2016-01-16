@@ -6,7 +6,7 @@ function [ d ] = cqwrap2range( d, min_range, max_range )
 % -----
 % d = vector (row or column) to be wrapped
 % min_range = minimum range 
-% max_range = maximum range. d will be wrapped to [min_range, max_range]
+% max_range = maximum range. d will be wrapped to (min_range, max_range]
 %
 % output
 % ------
@@ -19,7 +19,7 @@ d_rad = wrapTo2Pi(d_rad);
 
 % inverse d_rad to d
 d = d_rad * (max_range - min_range) / 2 / pi + min_range;
-
+d(d==min_range) = max_range;
 
 end
 
