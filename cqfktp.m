@@ -88,10 +88,11 @@ tp = real(ifft(fp_no_filter,[],1));
 % -----------------------------------------------------------------
 % if user provides us then we will do phase-correction filtering in
 % frequency domain then transform it back to time domain
-f = linspace(0,fnyq,nt/2+1);
-nf = find(f>=f0 & f<=f1);
-f01 = f1 - f0;
+
 if exist('us','var') && ~isempty(us)
+    f = linspace(0,fnyq,nt/2+1);
+    nf = find(f>=f0 & f<=f1);
+    f01 = f1 - f0;
     for k = 1:length(p)
         trf = fp(:,k);
         % phase-correction filtering
@@ -101,10 +102,11 @@ if exist('us','var') && ~isempty(us)
         trf = trf.*exp(1i*phc);
         fp(:,k) = trf;
     end
+    fp = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
+        1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
+    tp_f = real(ifft(fp,[],1));
 end
-fp = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
-    1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
-tp_f = real(ifft(fp,[],1));
+
 
 
 end
