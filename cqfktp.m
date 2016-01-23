@@ -1,5 +1,5 @@
 function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,...
-    alias_filter,us, f0, f1, tswp )
+    anti_alias,us, f0, f1, tswp )
 % Implement tau-p transform in f-k domain. Reference: Wade's Thesis in
 % UH, 1989
 %
@@ -15,7 +15,7 @@ function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,
 % frange = [0,1/2/dt] (default) frequency range,
 %          this gives you the ability of doing frequency filtering in
 %          fk domain.
-% alias_filter = true = program truncate aliased frequency
+% anti_alias = true = program truncate aliased frequency
 %                       automaticaaly
 %              = false = not apply anti-alias process
 % --------------------------
@@ -32,6 +32,10 @@ function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,
 % tp = tau - p data
 % fk_bg = fk data background, [0,2*pi)
 % tp_f = tau - p data after phase correction filtering
+
+if ~exist('anti_alias','var') || isempty(anti_alias)
+    anti_alias = true;
+end
 
 if ~exist('frange','var')||isempty(frange)
     frange = [0,1/2/dt];
@@ -71,10 +75,14 @@ fp = zeros(nt/2+1,length(p));
 for m = 1:length(p)
     index_of_f = f_index_range;
     k_interp = -p(m) * f; % each f we find a k to interpolate
-    % filter out of outsider
-    n_rm = find(k_interp<min(k) | k_interp>max(k));
-    k_interp(n_rm) = [];
-    index_of_f(n_rm) = [];
+    if anti_alias
+        % filter out of outsider
+        n_rm = find(k_interp<min(k) | k_interp>max(k));
+        k_interp(n_rm) = [];
+        index_of_f(n_rm) = [];
+    else
+        k_interp = cqwrap2range(k_interp, -knyq, knyq);
+    end
     
     % do interpolation 
     for iter = 1:length(k_interp)

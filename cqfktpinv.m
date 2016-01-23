@@ -42,6 +42,11 @@ k = linspace(0,knyq,nx/2+1);
 k = [k,-fliplr(k(2:end-1))];
 f_reserve = cell(nx,1); % each cell stores indexes to be filled by background
 
+% --------------------test only ---------------------
+figure; imagesc2(p,f,abs(fp));colormap gray; hold on;
+cqinvtick([-3000:200:-1000],90);
+% --------------------test only ---------------------
+
 % Fill the fk data trace-by-trace via k
 % -------------------------------------
 for trace = 1:length(k)
@@ -58,12 +63,23 @@ for trace = 1:length(k)
         fk(this_f_index(m),trace) = ...
             cqcomplex_interp(fp(this_f_index(m),:),p,this_p(m),term);
     end
+    %------------- test only ------------
+    if mod(trace,10) == 0
+        plot(this_p, this_f, 'r')
+        ylim([0,100])
+    end
+    % ------------ test only ------------
 end
 
 % Inverse fk before filling
 % --------------------------
-fk0 = [real(fk);flipud(real(fk(2:end-1,:)))] + ...
-    1i * [imag(fk);-flipud(imag(fk(2:end-1,:)))];
+% fk0 = [real(fk);flipud(real(fk(2:end-1,:)))] + ...
+%     1i * [imag(fk);-flipud(imag(fk(2:end-1,:)))];
+
+fk0 = rot90(conj(fk(2:end-1,:)),2);
+fk0 = [fk0(:,end),fk0(:,1:end-1)];
+fk0 = [fk;fk0];
+
 xt = real(ifft2(fk0));
 xt = xt(1:nt0,:);
 % ifft shift
@@ -86,8 +102,13 @@ end
 
 % Inverse fk after filling
 % --------------------------
-fk1 = [real(fk);flipud(real(fk(2:end-1,:)))] + ...
-    1i * [imag(fk);-flipud(imag(fk(2:end-1,:)))];
+% fk1 = [real(fk);flipud(real(fk(2:end-1,:)))] + ...
+%     1i * [imag(fk);-flipud(imag(fk(2:end-1,:)))];
+
+fk1 = rot90(conj(fk(2:end-1,:)),2);
+fk1 = [fk1(:,end),fk1(:,1:end-1)];
+fk1 = [fk;fk1];
+
 xt_bg = real(ifft2(fk1));
 xt_bg = xt_bg(1:nt0,:);
 % ifft shift

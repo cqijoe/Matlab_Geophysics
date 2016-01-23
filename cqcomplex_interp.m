@@ -37,10 +37,10 @@ if any( (diff(x) - dx) > 1e-5)
     error('Invalid x axis! Must be equally sampled!');
 end
 
-% make sure the query x is within x limit
-if max(qval) > max(x) || min(qval) < min(x)
-    error('Invalid query position! Must within range of x!');
-end
+% % make sure the query x is within x limit
+% if max(qval) > max(x) || min(qval) < min(x)
+%     error('Invalid query position! Must within range of x!');
+% end
 
 coeff = coeff(:);
 qval = qval(:);
