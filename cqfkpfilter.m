@@ -46,8 +46,9 @@ k = linspace(0, 1/2/dx, nx/2+1); k = [k,-fliplr(k(2:end-1))];
 % do phase correction
 % --------------------------------------------
 p_table = -repmat(k, nt/2+1, 1)./repmat(f, 1, nx); 
+p_table(f==0,:) = 0;
 if f0 < f1
-    p_table(f<f0 | f>f1,:) = 0;
+    p_table(f<f0 | f>f1,:) = 0; 
 else
     p_table(f<f1 | f>f0,:) = 0;
 end
