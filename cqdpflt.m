@@ -1,6 +1,6 @@
-function [ gather ] = cqdpflt( xs0, xr0, us, ur, z, ...
+function [ gather ] = cqdpflt( xs0, xr0, us, ur, z,xref,theta, ...
     v, f0, f1, tswp, taper, tuncor, tcor, dt )
-% Model Doppler effects for a flat reflector
+% Model Doppler effects for a flat reflector as well as a dipping reflector
 % 
 % input
 % -----
@@ -15,6 +15,10 @@ function [ gather ] = cqdpflt( xs0, xr0, us, ur, z, ...
 % us = scalor for source speed (m/s)
 % ur = scalor for receiver speed. Both speeds are constants. (m/s)
 % z = vector for reflector depth 
+% xref = reference x for the depth. it makes no difference for flat reflector. but is
+%        required for dipping reflection.
+% theta = vector of size(z) to indicate degree angles for the reflectors. Note, positive
+%         theta is down-dipping and negative theta is up-dipping
 % v = scalor for medium (usually) water speed
 % f0 = starting sweeping frequency in Hz
 % f1 = ending sweeping frequency in Hz
@@ -31,6 +35,7 @@ function [ gather ] = cqdpflt( xs0, xr0, us, ur, z, ...
 %    duncor = uncorrelated gather
 
 % check input
+theta = theta/180*pi;
 ns = length(xs0);
 nr = length(xr0);
 if ns~=nr && nr~=1 && ns~=1
@@ -64,7 +69,7 @@ for nz = 1:length(z)
 if ns == nr
     % create common-midpoint-gather
     for k = 1:ns
-        ts = search(xs0(k),xr0(k),z(nz));
+        ts = search(xs0(k),xr0(k),z(nz),nz);
         % create uncorrelated records
         duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
         t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
@@ -73,7 +78,7 @@ if ns == nr
 elseif ns == 1
     % create common-shot-gather
     for k = 1:nr
-        ts = search(xs0,xr0(k),z(nz));
+        ts = search(xs0,xr0(k),z(nz),nz);
         % create uncorrelated records
         duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
         t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
@@ -81,7 +86,7 @@ elseif ns == 1
     
 else
     for k = 1:ns
-        ts = search(xs0(k),xr0,z(nz));
+        ts = search(xs0(k),xr0,z(nz),nz);
         % create uncorrelated records
         duncor(:,k) = duncor(:,k) + cqchirp(ts,f0,tswp,f1,0,taper);
         t_align{nz}(k) = interp1(ts, t, 0, 'linear', 'extrap');
@@ -118,13 +123,24 @@ gather.tcor = tcor;
 
 
 % =================
-    function ts = search(xs0, xr0,z)
+    function ts = search(xs0, xr0,z,nrlt)
         % search for source time
         % xs0 and xr0 are only scalar
-        D = xr0 + t*ur - xs0 - t*us; % D is broadcast by tuncor
-        A = us^2 - v^2;
-        B = 2 * D * us; % broadcast
-        C = D.^2 + 4*z^2; % broadcast
+        % nrlt represents which reflector you are working on
+        if theta(nrlt)==0
+            D = - xr0 - t*ur + xs0 + t*us; % D is broadcast by tuncor
+            A = us^2 - v^2;
+            B = -2 * D * us; % broadcast
+            C = D.^2 + 4*z^2; % broadcast
+        else
+            x_theta = xref - z*cot(theta(nrlt));
+            D = xs0 + t*us - xr0 - t*ur;
+            H = xs0 + us*t - x_theta;
+            A = us^2 - v^2;
+            B = -8 * H * us * sin(theta(nrlt))^2 - 2 * D * us + ...
+                us * 4 * sin(theta(nrlt))^2*(D + H);
+            C = 4 * sin(theta(nrlt))^2 * ( H.^2 - D.*H ) + D.^2;
+        end
         ts = t - (-B - sqrt(B.^2-4*A*C))/(2*A);
     end
 

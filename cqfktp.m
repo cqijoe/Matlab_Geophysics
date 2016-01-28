@@ -1,4 +1,4 @@
-function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,...
+function [ tp, fk_bg, tp_f,xt_fk,fp_pos,f,k ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,...
     anti_alias,us, f0, f1, tswp )
 % Implement tau-p transform in f-k domain. Reference: Wade's Thesis in
 % UH, 1989
@@ -32,6 +32,8 @@ function [ tp, fk_bg, tp_f ] = cqfktp( xt, dt, dx, xleft, p, n_pad,term, frange,
 % tp = tau - p data
 % fk_bg = fk data background, [0,2*pi)
 % tp_f = tau - p data after phase correction filtering
+% xt_fk = fk data ot xt
+% fp_pos = positive f fp data before filtering
 
 if ~exist('anti_alias','var') || isempty(anti_alias)
     anti_alias = true;
@@ -91,7 +93,7 @@ for m = 1:length(p)
             cqcomplex_interp( xt_fk(this_ind,:), k, k_interp(iter), term );
     end
 end
-
+fp_pos = fp;
 fp_no_filter = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
     1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
 tp = real(ifft(fp_no_filter,[],1));
@@ -104,14 +106,14 @@ if exist('us','var') && ~isempty(us)
     f = linspace(0,fnyq,nt/2+1);
     nf = find(f>=f0 & f<=f1);
     f01 = f1 - f0;
-    for k = 1:length(p)
-        trf = fp(:,k);
+    for n = 1:length(p)
+        trf = fp(:,n);
         % phase-correction filtering
-        dpfct = -us * p(k);
+        dpfct = -us * p(n);
         phc = zeros(size(trf));
         phc(nf) = -2*pi*dpfct*tswp*f(nf).^2./f01;
         trf = trf.*exp(1i*phc);
-        fp(:,k) = trf;
+        fp(:,n) = trf;
     end
     fp = [real(fp);flipud(real(fp(2:end-1,:)))] + ...
         1i*[imag(fp);-flipud(imag(fp(2:end-1,:)))];
